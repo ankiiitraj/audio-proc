@@ -1,0 +1,12 @@
+cmake
+fastapi
+uvicorn
+face_recognition
+numpy
+python-multipart
+psycopg2-binary
+httpx
+python-dotenv
+pydantic
+requests
+pyannote.audio

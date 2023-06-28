@@ -1,0 +1,9 @@
+*/node_modules
+*/venv
+*/__pycache__
+*.DS_STORE
+*.env
+*.log
+venv
+*.pyc
+*.mp3
