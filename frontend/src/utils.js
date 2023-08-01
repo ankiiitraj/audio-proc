@@ -12,7 +12,7 @@ const joinMeeting = async (id) => {
 }
 
 const getCandidateStatus = async () => {
-    const response = await fetch(`${SERVER_URL}/multiple_faces_list`, {
+    const response = await fetch(`${SERVER_URL}/multiple_voices_list`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

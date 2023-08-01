@@ -6397,6 +6397,13 @@ lamejs@^1.2.1:
   dependencies:
     use-strict "1.0.1"
 
+lamejstmp@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/lamejstmp/-/lamejstmp-1.0.1.tgz"
+  integrity sha512-eEENqMTpiDNTaeOWWbv58KVT4uh9tP7XqpG+aODm9U2eRHwH8Hsx3OnNKxd3noVN6cHmQomv5HQ9N7tzTSVxNQ==
+  dependencies:
+    use-strict "1.0.1"
+
 language-subtag-registry@~0.3.2:
   version "0.3.22"
   resolved "https://registry.npmjs.org/language-subtag-registry/-/language-subtag-registry-0.3.22.tgz"

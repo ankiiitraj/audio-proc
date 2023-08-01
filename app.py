@@ -5,20 +5,19 @@ import random
 import requests
 
 import uvicorn
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from imgur import upload_image
-import face_recognition
 import psycopg2
 
 import os
 import base64
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from dotenv import load_dotenv
 from httpx import AsyncClient
 import uuid
+
+from audio_diarization import speakers_count
 
 load_dotenv()
 
@@ -38,12 +37,6 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
-
-class ParticipantScreen(BaseModel):
-    audio_file: UploadFile
-    participant_id: str
-    meeting_id: str
-    participant_name: str
 
 class ProctorPayload(BaseModel):
     meeting_id: str
@@ -113,7 +106,8 @@ async def multiple_faces_list(meeting: ProctorPayload):
     count = cur.fetchone()[0]
     
     if(count > 0):
-        cur.execute("SELECT * FROM meeting_proc_details WHERE meeting_id = %s ORDER BY ts DESC", (meeting.meeting_id,))
+        cur.execute("CREATE TABLE IF NOT EXISTS meeting_audio_proc_details (ts TIMESTAMP, meeting_id VARCHAR(255), participant_id VARCHAR(255), audio_url VARCHAR(255), verdict VARCHAR(255))")
+        cur.execute("SELECT * FROM meeting_audio_proc_details WHERE meeting_id = %s ORDER BY ts DESC", (meeting.meeting_id,))
         rows = cur.fetchall()
         conn.commit()
         cur.close()
@@ -126,63 +120,47 @@ async def multiple_faces_list(meeting: ProctorPayload):
         raise HTTPException(status_code=401, detail="Participant dose not has admin role")
 
 @app.post("/multiple_voices/")
-async def multiple_voices(file: UploadFile = File(...)):
+async def multiple_voices(file: UploadFile = File(...), meeting_id: str = Form(...), participant_id: str = Form(...), participant_name: str = Form(...)):
     contents = file.file.read()
     filename = file.filename.split('.')[0] + str(random.randint(1, 100)) + '.mp3'
     with open(filename, 'wb') as f:
         f.write(contents)
     file.file.close()
 
-    # conn = connect_to_db()
-    # cur = conn.cursor()
+    conn = connect_to_db()
+    cur = conn.cursor()
     
-    # cur.execute("CREATE TABLE IF NOT EXISTS meeting_proc_details (ts TIMESTAMP, meeting_id VARCHAR(255), participant_id VARCHAR(255), img_url VARCHAR(255), verdict VARCHAR(255))")
+    cur.execute("CREATE TABLE IF NOT EXISTS meeting_audio_proc_details (ts TIMESTAMP, meeting_id VARCHAR(255), participant_id VARCHAR(255), audio_url VARCHAR(255), verdict VARCHAR(255))")
 
-    # img_url = participant.ref_image_url
+    try:
+        count = speakers_count(filename)
+    except Exception as e:
+        logger.error(e)
+    
+    if count > 1:
+        logger.info(
+            f"Detected different voices for participant {participant_id}"
+        )
 
-    # response = requests.get(img_url)
-    # ref_img_data = io.BytesIO(response.content)
+        verdict = f"Participant Name: {participant_name} <> Anomaly: Different Voices Detected <> Participant ID: {participant_id}"
+        cur.execute("SELECT count(1) FROM meeting_audio_proc_details WHERE meeting_id=%s AND participant_id=%s AND ts >= (current_timestamp - INTERVAL '10 minutes')", (meeting_id, participant_id))
+        count = cur.fetchone()[0]
 
-    # img_data = participant.base64_img.split(",")[1]
-    # img_data_dc = base64.b64decode(participant.base64_img.split(",")[1])
+        if count == 0:
+            upload_resp = 'https://web.site/some_value' #await upload_image(img_data)
+            cur.execute("INSERT INTO meeting_audio_proc_details (ts, meeting_id, participant_id, audio_url, verdict) VALUES (current_timestamp, %s, %s, %s, %s)", 
+                (meeting_id, participant_id, upload_resp, verdict)
+            )
 
-    # file_obj = io.BytesIO(img_data_dc)
-    # unknown_image = face_recognition.load_image_file(file_obj)
-    # known_image = face_recognition.load_image_file(ref_img_data)
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    # biden_encoding = face_recognition.face_encodings(known_image)[0]
-    # unknown_encoding = face_recognition.face_encodings(unknown_image)[0]
+        if count == 0:
+            return { "id": participant_id, "different_voices_detected": True, "url": upload_resp }
+        return { "id": participant_id, "different_voices_detected": True, "url": "not uploaded" }
 
-    # results = face_recognition.compare_faces([biden_encoding], unknown_encoding)
-    # is_same_face = True
-    # for res in results:
-    #     is_same_face = is_same_face and res
-
-
-    # if not is_same_face:
-    #     logger.info(
-    #         f"Detected different faces for participant {participant.participant_id}"
-    #     )
-
-    #     verdict = f"Participant Name: {participant.participant_name} <> Anomaly: Different Faces Detected <> Participant ID: {participant.participant_id}"
-    #     cur.execute("SELECT count(1) FROM meeting_proc_details WHERE meeting_id=%s AND participant_id=%s AND ts >= (current_timestamp - INTERVAL '10 minutes')", (participant.meeting_id, participant.participant_id))
-    #     count = cur.fetchone()[0]
-
-    #     if count == 0:
-    #         upload_resp = await upload_image(img_data)
-    #         cur.execute("INSERT INTO meeting_proc_details (ts, meeting_id, participant_id, img_url, verdict) VALUES (current_timestamp, %s, %s, %s, %s)", 
-    #             (participant.meeting_id, participant.participant_id, upload_resp, verdict)
-    #         )
-
-    #     conn.commit()
-    #     cur.close()
-    #     conn.close()
-
-    #     if count == 0:
-    #         return { "id": participant.participant_id, "different_faces_detected": True, "url": upload_resp }
-    #     return { "id": participant.participant_id, "different_faces_detected": True, "url": "not uploaded" }
-
-    # return {"id": participant.participant_id, "different_faces_detected": False}
+    return {"id": participant_id, "different_voices_detected": False}
 
 @app.post("/meetings")
 async def create_meeting(meeting: Meeting):

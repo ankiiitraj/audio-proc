@@ -5,13 +5,22 @@ import { DyteMeeting, provideDyteDesignSystem } from '@dytesdk/react-ui-kit';
 import { useDyteClient } from '@dytesdk/react-web-core';
 import Proctor from './Proctor';
 import Heading from './Heading';
-import { SendImageToBackendMiddleware, joinMeeting } from './utils'
-import { audioRecorder, convertFloat32ToInt16 } from './AudioRecorder';
-// Constants
+import { joinMeeting } from './utils'
+import lamejs from 'lamejstmp';
+
+// Constants 
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
 let LAST_BACKEND_PING_TIME = 0;
-const DETECT_FACES_ENDPOINT = `${SERVER_URL}/same_faces`;
-const TIME_BETWEEN_BACKEND_PINGS = 15000;
+const TIME_BETWEEN_BACKEND_PINGS = 60000;
+
+function convertFloat32ToInt16(buffer) {
+    var l = buffer.length;
+    var buf = new Int16Array(l);
+    while (l--) {
+        buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
+    }
+    return buf;
+}
 
 const Meet = () => {
     const meetingEl = useRef();
@@ -20,32 +29,38 @@ const Meet = () => {
     const [isAdminBool, setAdminBool] = useState(null);
     const meetingId = window.location.pathname.split('/')[2]
 
-    function sendAudioToServer() {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.start();
-                const audioChunks = [];
-
-                mediaRecorder.addEventListener("dataavailable", event => {
-                    audioChunks.push(event.data);
+    async function audioToMp3Middleware(audioContext) {
+        const processor = audioContext.createScriptProcessor(1024, 1, 1);
+        const encoder = new lamejs.Mp3Encoder(1, 44100, 128);
+        const bufferSize = 128; // change this to match your sample size
+        let mp3Data = [];
+    
+        processor.onaudioprocess = (e) => {
+            const inputData = e.inputBuffer.getChannelData(0);
+            const mp3buf = encoder.encodeBuffer(convertFloat32ToInt16(inputData));
+            if (mp3buf.length > 0) {
+                mp3Data.push(mp3buf); 
+            }
+            const currentTime = Date.now();
+            if (mp3Data.length >= bufferSize && currentTime - LAST_BACKEND_PING_TIME > TIME_BETWEEN_BACKEND_PINGS) {
+                LAST_BACKEND_PING_TIME = currentTime;
+                const file = new File(mp3Data, 'audio.mp3');
+                const form = new FormData();
+                form.append("file", file);
+                form.append("meeting_id", meetingId)
+                form.append("participant_id", meeting?.self.id)
+                form.append("participant_name", meeting?.self.name)
+    
+                fetch(`${SERVER_URL}/multiple_voices`, {
+                  method: "POST",
+                  body: form
                 });
-
-                mediaRecorder.onstop = function () {
-                    console.log(audioChunks)
-                    
-                    const file = new File(audioChunks, 'filename.mp3');
-                    const form = new FormData();
-                    form.append("file", file);
-                    fetch(`${SERVER_URL}/multiple_voices`, {
-                        method: "POST",
-                        body: form
-                    })
-                }
-                setTimeout(function () {
-                    mediaRecorder.stop();
-                }, 10000)
-            });
+    
+                mp3Data = [];
+            }
+        };
+    
+        return processor;
     }
 
     const isAdmin = async (id) => {
@@ -83,11 +98,15 @@ const Meet = () => {
 
     useEffect(() => {
         if (meeting?.self) {
-            setInterval(() => {
-                sendAudioToServer()
-            }, 60000)
+            meeting.self.addAudioMiddleware(audioToMp3Middleware);
         }
-    }, [meeting?.self])
+
+        return () => {
+            if (meeting?.self) {
+                meeting.self.removeAudioMiddleware(audioToMp3Middleware);
+            }
+        }
+    }, [meeting?.self]);
 
     return (
         <div style={{ height: "96vh", width: "100vw", display: "flex" }}>
