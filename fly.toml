@@ -1,0 +1,15 @@
+# fly.toml app configuration file generated for dyte-audio on 2023-08-02T04:33:32+05:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "dyte-audio"
+primary_region = "lax"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]

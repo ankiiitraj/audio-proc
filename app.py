@@ -9,12 +9,14 @@ from fastapi import FastAPI, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg2
+# from utils import upload_audio
 
 import os
 import base64
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from httpx import AsyncClient
+import httpx
 import uuid
 
 from audio_diarization import speakers_count
@@ -26,7 +28,8 @@ DYTE_ORG_ID = os.getenv("DYTE_ORG_ID")
 
 API_HASH = base64.b64encode(f"{DYTE_ORG_ID}:{DYTE_API_KEY}".encode('utf-8')).decode('utf-8')
 
-DYTE_API = AsyncClient(base_url='https://api.cluster.dyte.in/v2', headers={'Authorization': f"Basic {API_HASH}"})
+timeout = httpx.Timeout(10.0, read=None)
+DYTE_API = AsyncClient(base_url='https://api.cluster.dyte.in/v2', headers={'Authorization': f"Basic {API_HASH}"}, timeout=timeout)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

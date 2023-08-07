@@ -34,8 +34,7 @@ const Proctor = () => {
                             <img src="https://images.yourstory.com/cs/images/companies/Dyte-1608553297314.jpg" style={{ borderRadius: "50px", height: "60px", border: "1px double lightblue" }} />
                         </div>
                         <div style={{ textAlign: "center", padding: "20px", backgroundColor: "#2160fd", fontSize: "large", fontWeight: "400", borderRadius: "10px 10px 10px 10px", width: "80%",  }} >
-                            <div style={{ color: "white", padding: "20px 0px", textAlign: "left" }}>{status[4].split('<>').map(text => <div>{text}</div>)}<div>Timestamp: {(new Date(status[0])).toLocaleString()}</div><div>Audio Link: {status[3]}</div></div>
-                            {/* <img style={{ borderRadius: "10px", width: "100%" }} src={status[3]} /> */}
+                            <div style={{ color: "white", padding: "20px 0px", textAlign: "left" }}>{status[4].split('<>').map(text => <div>{text}</div>)}<div>Timestamp: {(new Date(status[0])).toLocaleString()}</div></div>
                         </div>
                     </div>) : <div style={{ color: "white" }}>Wait or check if you have admin privileges to access the proctoring dashboard.</div>}
             </div>   

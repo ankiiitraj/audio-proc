@@ -32,7 +32,7 @@ const Meet = () => {
     async function audioToMp3Middleware(audioContext) {
         const processor = audioContext.createScriptProcessor(1024, 1, 1);
         const encoder = new lamejs.Mp3Encoder(1, 44100, 128);
-        const bufferSize = 128; // change this to match your sample size
+        const bufferSize = 512;
         let mp3Data = [];
     
         processor.onaudioprocess = (e) => {
@@ -97,16 +97,16 @@ const Meet = () => {
     }, [userToken])
 
     useEffect(() => {
-        if (meeting?.self) {
+        if (isAdminBool === false && meeting?.self) {
             meeting.self.addAudioMiddleware(audioToMp3Middleware);
         }
 
         return () => {
-            if (meeting?.self) {
+            if (isAdminBool === false && meeting?.self) {
                 meeting.self.removeAudioMiddleware(audioToMp3Middleware);
             }
         }
-    }, [meeting?.self]);
+    }, [meeting?.self, isAdminBool]);
 
     return (
         <div style={{ height: "96vh", width: "100vw", display: "flex" }}>

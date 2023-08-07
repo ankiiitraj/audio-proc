@@ -3,7 +3,7 @@ const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
 const joinMeeting = async (id) => {
     const res = await fetch(`${SERVER_URL}/meetings/${id}/participants`, {
         method: "POST",
-        body: JSON.stringify({ name: "new user", preset_name: "group_call_host", meeting_id: id }),
+        body: JSON.stringify({ name: "new user", preset_name: "audio_proc_preset", meeting_id: id }),
         headers: { "Content-Type": "application/json" }
     })
     const resJson = await res.json()

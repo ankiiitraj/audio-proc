@@ -9,4 +9,3 @@ httpx
 python-dotenv
 pydantic
 requests
-pyannote.audio

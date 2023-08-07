@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import ImageUploader from "./ImageInput";
 import Meet from "./Meet";
 
 
@@ -7,7 +6,6 @@ const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
 
 const Stage = () => {
     const [isAdminBool, setAdminBool] = useState(null);
-    const [isRefImgUploaded, setImgUploadedStatus] = useState(null);
     const meetingId = window.location.pathname.split('/')[2]
 
     const isAdmin = async (id) => {
@@ -26,8 +24,7 @@ const Stage = () => {
 
     return (
         <div style={{ height: "100vh", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center", color: "white"}}>
-            {/* {isAdminBool == null ? <>Loading...</> : <>{(isAdminBool || (isAdminBool === false && isRefImgUploaded )) ? <Meet isAdminBool={isAdminBool} /> : <ImageUploader setImgUploadedStatus={setImgUploadedStatus}/>}</>} */}
-            <Meet isAdminBool={isAdminBool} />
+            {isAdminBool == null ? <>Loading...</> : <><Meet isAdminBool={isAdminBool} /></>}
         </div>
     )
 }
