@@ -541,7 +541,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import './App.css'
 import Stage from './Stage';
 
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000"
 
 function App() {
     const [meetingId, setMeetingId] = useState()
@@ -637,7 +637,7 @@ import { useState, useEffect } from "react";
 import Meet from "./Meet";
 
 
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000"
 
 const Stage = () => {
     const [isAdminBool, setAdminBool] = useState(null);
@@ -687,7 +687,7 @@ import { joinMeeting } from './utils'
 import lamejs from 'lamejstmp';
 
 // Constants 
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000"
 let LAST_BACKEND_PING_TIME = 0;
 const TIME_BETWEEN_BACKEND_PINGS = 60000;
 
@@ -870,7 +870,7 @@ Let's add or utility functions.
 Create a file `frontend/src/utils.js`.
 
 ```js
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000"
 
 const joinMeeting = async (id) => {
     const res = await fetch(`${SERVER_URL}/meetings/${id}/participants`, {

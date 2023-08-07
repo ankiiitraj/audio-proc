@@ -87,8 +87,8 @@ def connect_to_db():
 async def root():
     return {"message": "Hello World"}
 
-@app.post("/is_admin/")
-async def multiple_faces_list(admin: AdminProp):
+@app.post("/is_admin")
+async def is_admin(admin: AdminProp):
     conn = connect_to_db()
     cur = conn.cursor()
     cur.execute("SELECT count(1) FROM meeting_host_info WHERE meeting_id = %s AND admin_id = %s", (admin.meeting_id, admin.admin_id,))
@@ -100,7 +100,7 @@ async def multiple_faces_list(admin: AdminProp):
     else:
         return { "admin": False }
 
-@app.post("/multiple_voices_list/")
+@app.post("/multiple_voices_list")
 async def multiple_faces_list(meeting: ProctorPayload):
     conn = connect_to_db()
     cur = conn.cursor()
@@ -122,7 +122,7 @@ async def multiple_faces_list(meeting: ProctorPayload):
         conn.close()
         raise HTTPException(status_code=401, detail="Participant dose not has admin role")
 
-@app.post("/multiple_voices/")
+@app.post("/multiple_voices")
 async def multiple_voices(file: UploadFile = File(...), meeting_id: str = Form(...), participant_id: str = Form(...), participant_name: str = Form(...)):
     contents = file.file.read()
     filename = file.filename.split('.')[0] + str(random.randint(1, 100)) + '.mp3'

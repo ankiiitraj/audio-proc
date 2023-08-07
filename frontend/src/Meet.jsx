@@ -9,7 +9,7 @@ import { joinMeeting } from './utils'
 import lamejs from 'lamejstmp';
 
 // Constants 
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:8000"
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000"
 let LAST_BACKEND_PING_TIME = 0;
 const TIME_BETWEEN_BACKEND_PINGS = 60000;
 
